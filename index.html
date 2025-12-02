@@ -6,6 +6,10 @@
     <title>Conference Agenda - Hong Kong</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; background: #f2f2f7; padding: 20px; max-width: 600px; margin: 0 auto; padding-bottom: 120px; -webkit-tap-highlight-color: transparent; }
+        
+        /* 页面主要内容容器 */
+        #main-content { transition: opacity 0.3s; }
+        
         h1 { text-align: center; color: #1d1d1f; font-size: 22px; margin-bottom: 5px; font-weight: 700; }
         .subtitle { text-align: center; color: #86868b; font-size: 14px; margin-bottom: 25px; margin-top: 5px; }
         
@@ -27,8 +31,8 @@
         #generateBtn:active { transform: scale(0.96); }
         .btn-hint { font-size: 12px; color: #999; margin-top: 8px; text-shadow: 0 1px 2px white; background: rgba(255,255,255,0.8); padding: 2px 8px; border-radius: 4px;}
         
-        /* 优化的微信遮罩 */
-        #wx-mask { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; color: white; padding: 40px 20px; text-align: center; backdrop-filter: blur(5px); }
+        /* 微信遮罩 (强制显示) */
+        #wx-mask { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; z-index: 99999; color: white; padding: 40px 20px; text-align: center; }
         .mask-content { text-align: right; margin-right: 20px; margin-top: 20px;}
         .mask-arrow { font-size: 50px; animation: bounce 1.5s infinite; color: #007AFF; display: inline-block; margin-bottom: 10px;}
         .mask-text { font-size: 20px; font-weight: bold; margin-top: 10px; line-height: 1.5; }
@@ -39,22 +43,8 @@
 </head>
 <body>
 
-    <h1>Conference Agenda · Hong Kong</h1>
-    <p class="subtitle">2025/12/16 (Tuesday)</p>
-
-    <div id="session-list">
-        <!-- JS 自动生成 -->
-    </div>
-
-    <div class="btn-container">
-        <button id="generateBtn" onclick="downloadICS()">
-            <span style="font-size: 20px">📅</span> Add to Calendar
-        </button>
-        <div class="btn-hint" id="btnHint">Auto-detect timezone: Hong Kong (GMT+8)</div>
-    </div>
-
-    <!-- 微信引导遮罩 (双语版) -->
-    <div id="wx-mask" onclick="this.style.display='none'">
+    <!-- 微信强力拦截遮罩 -->
+    <div id="wx-mask">
         <div class="mask-content">
             <div class="mask-arrow">↗</div>
             <div class="mask-text">
@@ -62,15 +52,43 @@
                 <span style="font-size: 16px">请点击右上角，选择“在浏览器打开”</span>
             </div>
             <div class="mask-sub">
-                WeChat does not support calendar import directly.<br>
-                Please use Safari or Chrome.<br><br>
-                微信不支持直接导入日历文件，请跳转浏览器使用。
+                To prevent data loss, please switch to system browser.<br>
+                为防止选择丢失，请先跳转至浏览器。
             </div>
         </div>
     </div>
 
+    <!-- 主界面容器 -->
+    <div id="main-content">
+        <h1>Conference Agenda · Hong Kong</h1>
+        <p class="subtitle">2025/12/16 (Tuesday)</p>
+
+        <div id="session-list">
+            <!-- JS 自动生成 -->
+        </div>
+
+        <div class="btn-container">
+            <button id="generateBtn" onclick="downloadICS()">
+                <span style="font-size: 20px">📅</span> Add to Calendar
+            </button>
+            <div class="btn-hint">Auto-detect timezone: Hong Kong (GMT+8)</div>
+        </div>
+    </div>
+
 <script>
-    // ================= 配置区域 =================
+    // ================= 1. 立即执行：微信拦截 =================
+    // 放在代码最前面，确保一加载就拦截，不给用户操作机会
+    (function checkWeChat() {
+        var ua = navigator.userAgent.toLowerCase();
+        if (ua.match(/MicroMessenger/i) == "micromessenger") {
+            // 显示遮罩
+            document.getElementById('wx-mask').style.display = 'block';
+            // 隐藏主内容，防止用户试图操作
+            document.getElementById('main-content').style.display = 'none';
+        }
+    })();
+
+    // ================= 2. 配置区域 =================
     const CONFERENCE_DATE = '2025/12/16'; 
 
     const rawData = [
@@ -87,7 +105,7 @@
         { time: "16:30 - 17:00", title: "Panel Session", speaker: "Host：Yuan Liu", company: "Assistant Professor, Hong Kong University of Science and Technology" }
     ];
 
-    // ================= 逻辑处理 =================
+    // ================= 3. 逻辑处理 =================
 
     const sessions = [];
     rawData.forEach((item, index) => {
@@ -141,20 +159,23 @@
         }
     }
 
+    // 下载 ICS 核心逻辑
     function downloadICS() {
         const ua = navigator.userAgent.toLowerCase();
-        
-        // 1. 微信环境检测
-        if (ua.match(/MicroMessenger/i) == "micromessenger") {
-            document.getElementById('wx-mask').style.display = 'block';
-            return;
-        }
+        const isAndroid = ua.indexOf('android') > -1;
 
-        // 2. 验证选择
+        // 1. 验证选择
         const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
         if (checkboxes.length === 0) {
             alert("Please select at least one session.\n请至少选择一个议程。");
             return;
+        }
+
+        // 2. 安卓用户的确认弹窗 (优化体验)
+        // 虽然不能直接写入，但通过 confirm 模拟 "系统询问" 的感觉
+        if (isAndroid) {
+            const confirmed = confirm(`Add ${checkboxes.length} sessions to your calendar?\n\n是否将 ${checkboxes.length} 个议程加入日历？`);
+            if (!confirmed) return; // 用户点取消，则不下载
         }
 
         // 3. 准备 ICS 数据
@@ -220,11 +241,11 @@
         link.click();
         document.body.removeChild(link);
 
-        // 5. 针对安卓的额外提示 (因为安卓不会自动弹出导入界面)
-        if (ua.indexOf('android') > -1) {
+        // 5. 安卓下载后提示 (因为技术限制无法自动打开)
+        if (isAndroid) {
             setTimeout(() => {
-                alert("📅 Download Started!\n\nPlease check your Notification Bar, tap the downloaded file 'HK_Conference.ics' to import.\n\n下载已开始！\n请下拉通知栏，点击下载的文件以导入日历。");
-            }, 800);
+                alert("File downloaded.\nPlease OPEN it from notification bar to save.\n\n文件已下载。\n请下拉通知栏打开文件以完成保存。");
+            }, 500);
         }
     }
 
