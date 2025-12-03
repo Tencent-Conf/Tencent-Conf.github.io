@@ -8,7 +8,7 @@
     <style>
         :root {
             /* === 🎨 配色中心 === */
-            --page-bg-color: #2356DD; /* 保持您选定的深蓝 */
+            --page-bg-color: #2356DD; /* 深蓝背景 */
             --primary-color: #2356DD; 
             --card-bg: #ffffff;
             --text-main: #1d1d1f;          
@@ -42,7 +42,7 @@
             text-transform: uppercase;
         }
 
-        /* 2. SIGGRAPH Asia 2025 淡淡的标识 */
+        /* 2. SIGGRAPH Asia 2025 标识 */
         .series-tag {
             font-size: 14px;
             color: rgba(255,255,255, 0.5); /* 半透明淡淡的效果 */
@@ -60,7 +60,7 @@
             text-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        /* 日期 & 地点 */
+        /* 日期 */
         .subtitle { 
             color: rgba(255,255,255, 0.9); 
             font-size: 15px; 
@@ -68,7 +68,7 @@
             font-weight: 500; 
         }
         
-        /* 新增：地点样式 */
+        /* 地点样式 */
         .location-text {
             color: rgba(255,255,255, 0.95); 
             font-size: 16px; 
@@ -168,7 +168,7 @@
             <!-- 日期 -->
             <p class="subtitle">2025/12/16 (Tuesday)</p>
             
-            <!-- 地点 (新增) -->
+            <!-- 地点 -->
             <div class="location-text">📍 Location: S224-225</div>
         </div>
 
@@ -183,7 +183,6 @@
             <button id="generateBtn" onclick="downloadICS()">
                 <span style="font-size: 20px">📅</span> Add to Calendar
             </button>
-            <!-- 修改为 Beijing Time -->
             <div class="btn-hint">Timezone: Beijing Time (GMT+8)</div>
         </div>
     </div>
@@ -196,8 +195,8 @@
     };
 
     // ================= 议程数据 =================
+    // ⚠️ 更新：删除了 Breakfast，修改了 Panel Session 时间
     const rawData = [
-        { time: "09:30 - 10:00", title: "Breakfast", speaker: "", company: "" },
         { time: "10:00 - 10:15", title: "Opening Session", speaker: "Ying Shan", company: "Tencent ARC Lab" },
         { time: "10:15 - 10:45", title: "Towards 3D-aware Video World Models", speaker: "Wenbo Hu", company: "Tencent ARC Lab" },
         { time: "10:45 - 11:15", title: "A Human-Centered Approach to Multimodal Consistent Video Generation: Models and Practical Deployments", speaker: "Tianxiang Zheng", company: "Tencent Hunyuan" },
@@ -207,7 +206,7 @@
         { time: "15:00 - 15:30", title: "Frontier Exploration and Practices of Rendering Technologies in Games—Breaking Aniudiovisual Boundaries, Crafting Next-Generation Interactive Experiences", speaker: "Chao Li", company: "Tencent Games" },
         { time: "15:30 - 16:00", title: "Real-time Turbulent Flows Simulation for Games", speaker: "Kui Wu", company: "Tencent Games" },
         { time: "16:00 - 16:30", title: "Curl-free and Divergence-free Wavelets for Computer Graphics", speaker: "Xiaohua Ren", company: "Weixin/WeChat" },
-        { time: "16:30 - 17:00", title: "Panel Session", speaker: "Host：Yuan Liu", company: "Assistant Professor, Hong Kong University of Science and Technology" }
+        { time: "16:30 - 17:30", title: "Panel Session", speaker: "Host：Yuan Liu", company: "Assistant Professor, Hong Kong University of Science and Technology" }
     ];
 
     // ================= 逻辑代码 =================
@@ -287,9 +286,6 @@
             return;
         }
 
-        // ❌ 已删除：安卓的 confirm 确认弹窗
-        // 现在点击按钮直接开始下载/弹窗
-
         const dateParts = CONFIG.date.split('/');
         const year = dateParts[0];
         const month = dateParts[1].padStart(2, '0');
@@ -334,7 +330,7 @@
                 icsContent.push(`DTEND;TZID=Asia/Hong_Kong:${dateString}T${endRaw}`);
                 icsContent.push(`SUMMARY:${summary}`);
                 icsContent.push(`DESCRIPTION:${description}`);
-                icsContent.push(`LOCATION:${CONFIG.location}`); // 写入地点
+                icsContent.push(`LOCATION:${CONFIG.location}`); 
                 icsContent.push("END:VEVENT");
             }
         });
@@ -352,7 +348,6 @@
         link.click();
         document.body.removeChild(link);
 
-        // ✅ 保留：安卓下载后的提示（这是必须的，否则用户不知道文件去哪了）
         if (isAndroid) {
             setTimeout(() => {
                 alert("File downloaded.\nPlease OPEN it from notification bar to save.");
